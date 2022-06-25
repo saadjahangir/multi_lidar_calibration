@@ -7,45 +7,6 @@ import random
 import matplotlib.pyplot as plt
 import copy
    
-
-def DetectVerticalPlanes(points, min_ratio=0.05, threshold=0.01, iterations=20000):
-
-    plane_list = []
-    temp_list = []
-    N = len(points)
-
-    target = points.copy()
-    count = 0
-
-    counter = 0
-
-
-    while count < (1 - min_ratio) * N:
-        w, index = PlaneRegression(
-            target, threshold=threshold, init_n=3, iter=iterations)
-        
-        count += len(index)
-        unit_vector_new = w[:3] / np.linalg.norm(w[:3])
-
-
-        dot_prod = np.dot(unit_vector_new, np.array([0, 0, 1]))
-        print("DEBUG DOT Products Vertical ", dot_prod)
-        if dot_prod > 0.99:
-            plane_list.append([w, target[index]])
-        else:
-            pass
-
-        counter+=1 
-        target = np.delete(target, index, axis=0)
-        
-
-    print(f"Numnber of points {count}")
-    # print(np.array(temp_list[0][0]))
-
-    return plane_list
-
-
-
 def DetectOrthoPlane(points, min_ratio=0.05, threshold=0.01, iterations=1000):
 
     plane_list = []
@@ -158,8 +119,6 @@ def PreprocessCloud(cloud, gp_removal):
         
         planes = np.concatenate(planes, axis=0)
         colors = np.concatenate(colors, axis=0)
-
-       
 
         inlier_cloud = getColoredPlanes(planes, colors)
         return inlier_cloud
@@ -287,8 +246,6 @@ def getCornerPlanes(cloud):
     
     planes = np.concatenate(planes, axis=0)
     colors = np.concatenate(colors, axis=0)
-
-       
 
     inlier_cloud = getColoredPlanes(planes, colors)
     return inlier_cloud, planes, planes_eqs
@@ -492,7 +449,7 @@ def getLastRough(plane1, plane2, tx, ty):
         aligned_plane2 = rotated_plane2.translate((0, -y_offset, 0))
 
 
-    return last_plane1, aligned_plane2, tx+x_offset, ty + y_offset
+    return last_plane1, aligned_plane2, R, tx+x_offset, ty + y_offset
 
 
 
@@ -521,7 +478,7 @@ if __name__ == "__main__":
     
 
     ## Draw the point Cloud Data
-    # Draw2Clouds(source, target)
+    Draw2Clouds(source, target)
 
 
     ## Extract the ground planes
@@ -530,7 +487,7 @@ if __name__ == "__main__":
 
 
     # Draw ground both extracted Planes
-    # Draw2Clouds(GP1, GP2)
+    Draw2Clouds(GP1, GP2)
     
     # DrawResultWithNormals(GP1)
 
@@ -538,13 +495,13 @@ if __name__ == "__main__":
     alignedGP2, R1, tz = GPAlignment(GP1, GP2)
 
     # Draw Results after ground plane alignment
-    # Draw2Clouds(GP1, alignedGP2)
+    Draw2Clouds(GP1, alignedGP2)
 
     # Extract the vertical planes
     OP1 = PreprocessCloud(source, gp_removal=True)
     OP2 = PreprocessCloud(target, gp_removal=True)
 
-    # Draw2Clouds(OP1, OP2)
+    Draw2Clouds(OP1, OP2)
     
     # Extract Dominent Container Clusters
     Cluster1 = getBestCluster(OP1)
@@ -560,7 +517,7 @@ if __name__ == "__main__":
     # To save the all three orthogonal planes for refinement
 
     GP2 = PreprocessCloud(target, False)
-    # Draw2Clouds(GP1+Corner1, GP2 + Corner2)
+    Draw2Clouds(GP1+Corner1, GP2 + Corner2)
 
     # DrawResultWithNormals(Cluster1+Cluster2)
     # DrawResultWithNormals(Corner1 + Corner2)
@@ -573,7 +530,10 @@ if __name__ == "__main__":
     last_plane1, alighnedYaw2, rotation2, tx, ty = getYaw(Corner1, models1, Corner2, models2, tz)
 
     # Last x/y aligment
-    only_plane1, alighned2, tx, ty = getLastRough(last_plane1, alighnedYaw2, tx, ty)
+    only_plane1, alighned2, rotation3, tx, ty = getLastRough(last_plane1, alighnedYaw2, tx, ty)
+
+    rotation_rough = np.matmul(np.matmul(R1, rotation2), rotation3)
+    print(rotation_rough)
 
     print(tx, ty, tz)
     Draw2Clouds(last_plane1, alighnedYaw2)

@@ -203,7 +203,7 @@ def Draw2Clouds(cloud1, cloud2):
     o3d.visualization.draw_geometries([cloud1, cloud2],point_show_normal = False)
 
 def DrawResultWithNormals(cloud):    
-    o3d.visualization.draw_geometries([cloud],point_show_normal = True)
+    o3d.visualization.draw_geometries([cloud],point_show_normal = False)
 
 def getColoredPlanes(points, colors):
     pcd = o3d.geometry.PointCloud()
